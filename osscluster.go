@@ -1323,7 +1323,7 @@ func (c *ClusterClient) processPipelineNodeConn(
 		return err
 	}
 
-	return cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd *proto.Reader) error {
+	return cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd internal.Reader) error {
 		return c.pipelineReadCmds(ctx, node, rd, cmds, failedCmds)
 	})
 }
@@ -1331,7 +1331,7 @@ func (c *ClusterClient) processPipelineNodeConn(
 func (c *ClusterClient) pipelineReadCmds(
 	ctx context.Context,
 	node *clusterNode,
-	rd *proto.Reader,
+	rd internal.Reader,
 	cmds []Cmder,
 	failedCmds *cmdsMap,
 ) error {
@@ -1504,7 +1504,7 @@ func (c *ClusterClient) processTxPipelineNodeConn(
 		return err
 	}
 
-	return cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd *proto.Reader) error {
+	return cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd internal.Reader) error {
 		statusCmd := cmds[0].(*StatusCmd)
 		// Trim multi and exec.
 		trimmedCmds := cmds[1 : len(cmds)-1]
@@ -1528,7 +1528,7 @@ func (c *ClusterClient) processTxPipelineNodeConn(
 
 func (c *ClusterClient) txPipelineReadQueued(
 	ctx context.Context,
-	rd *proto.Reader,
+	rd internal.Reader,
 	statusCmd *StatusCmd,
 	cmds []Cmder,
 	failedCmds *cmdsMap,

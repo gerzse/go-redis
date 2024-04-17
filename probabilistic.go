@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/redis/go-redis/v9/internal/proto"
+	"github.com/redis/go-redis/v9/internal"
 )
 
 type ProbabilisticCmdable interface {
@@ -247,7 +247,7 @@ func (cmd *ScanDumpCmd) Val() ScanDump {
 	return cmd.val
 }
 
-func (cmd *ScanDumpCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *ScanDumpCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -318,7 +318,7 @@ func (cmd *BFInfoCmd) Result() (BFInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *BFInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *BFInfoCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -615,7 +615,7 @@ func (cmd *CFInfoCmd) Result() (CFInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *CFInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *CFInfoCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -777,7 +777,7 @@ func (cmd *CMSInfoCmd) Result() (CMSInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *CMSInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *CMSInfoCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -970,7 +970,7 @@ func (cmd *TopKInfoCmd) Result() (TopKInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *TopKInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *TopKInfoCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -1233,7 +1233,7 @@ func (cmd *TDigestInfoCmd) Result() (TDigestInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *TDigestInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *TDigestInfoCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err

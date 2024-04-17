@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9/internal"
+	"github.com/redis/go-redis/v9/internal/cache"
 	"github.com/redis/go-redis/v9/internal/hscan"
 	"github.com/redis/go-redis/v9/internal/pool"
 	"github.com/redis/go-redis/v9/internal/proto"
@@ -395,20 +395,26 @@ func (c *baseClient) dial(ctx context.Context, network, addr string) (net.Conn, 
 
 func (c *baseClient) process(ctx context.Context, cmd Cmder) error {
 	var lastErr error
-	// Check if cache enabled
+
 	if c.opt.CacheObject != nil {
-		// Check if the command is in cache, if so return from cache
-		if val, found := c.opt.CacheObject.GetKey(cmd.Name()); found {
-			rd := proto.NewReader(bytes.NewReader(val.([]byte)))
-			err := cmd.readReply(rd)
+		if reader, found, err := c.opt.CacheObject.GetKey(cmd.Args()); found {
 			if err != nil {
-				lastErr = err
+				return err
 			}
-			return lastErr
+
+			fmt.Println("cmd ", cmd, " read reply ", reader)
+			err = cmd.readReply(reader)
+			if err != nil {
+				return err
+			}
+
+			lastErr = err
 		}
 	}
+
 	for attempt := 0; attempt <= c.opt.MaxRetries; attempt++ {
 		attempt := attempt
+
 		retry, err := c._process(ctx, cmd, attempt)
 		if err == nil || !retry {
 			return err
@@ -428,7 +434,6 @@ func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool
 
 	retryTimeout := uint32(0)
 	if err := c.withConn(ctx, func(ctx context.Context, cn *pool.Conn) error {
-		cn.ResetRawOutput()
 		if err := cn.WithWriter(c.context(ctx), c.opt.WriteTimeout, func(wr *proto.Writer) error {
 			return writeCmd(wr, cmd)
 		}); err != nil {
@@ -436,7 +441,14 @@ func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool
 			return err
 		}
 
-		if err := cn.WithReader(c.context(ctx), c.cmdTimeout(cmd), cmd.readReply); err != nil {
+		commandReader := cmd.readReply
+		var cacheReaderSpy *cache.ReaderSpy
+
+		if c.opt.CacheObject != nil {
+			cacheReaderSpy, commandReader = c.opt.CacheObject.SpyReader(commandReader)
+		}
+
+		if err := cn.WithReader(c.context(ctx), c.cmdTimeout(cmd), commandReader); err != nil {
 			if cmd.readTimeout() == nil {
 				atomic.StoreUint32(&retryTimeout, 1)
 			} else {
@@ -445,9 +457,11 @@ func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool
 			return err
 		}
 
-		if c.opt.CacheObject != nil {
-			// Set the command in cache
-			c.opt.CacheObject.SetKey(cmd.Name(), cn.GetRawOutput(), 0)
+		if cacheReaderSpy != nil {
+			_, err := cacheReaderSpy.StoreInCache(cmd.Args())
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -547,7 +561,7 @@ func (c *baseClient) pipelineProcessCmds(
 		return true, err
 	}
 
-	if err := cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd *proto.Reader) error {
+	if err := cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd internal.Reader) error {
 		return pipelineReadCmds(rd, cmds)
 	}); err != nil {
 		return true, err
@@ -556,7 +570,7 @@ func (c *baseClient) pipelineProcessCmds(
 	return false, nil
 }
 
-func pipelineReadCmds(rd *proto.Reader, cmds []Cmder) error {
+func pipelineReadCmds(rd internal.Reader, cmds []Cmder) error {
 	for i, cmd := range cmds {
 		err := cmd.readReply(rd)
 		cmd.SetErr(err)
@@ -579,7 +593,7 @@ func (c *baseClient) txPipelineProcessCmds(
 		return true, err
 	}
 
-	if err := cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd *proto.Reader) error {
+	if err := cn.WithReader(c.context(ctx), c.opt.ReadTimeout, func(rd internal.Reader) error {
 		statusCmd := cmds[0].(*StatusCmd)
 		// Trim multi and exec.
 		trimmedCmds := cmds[1 : len(cmds)-1]
@@ -597,7 +611,7 @@ func (c *baseClient) txPipelineProcessCmds(
 	return false, nil
 }
 
-func txPipelineReadQueued(rd *proto.Reader, statusCmd *StatusCmd, cmds []Cmder) error {
+func txPipelineReadQueued(rd internal.Reader, statusCmd *StatusCmd, cmds []Cmder) error {
 	// Parse +OK.
 	if err := statusCmd.readReply(rd); err != nil {
 		return err
@@ -649,6 +663,7 @@ type Client struct {
 // NewClient returns a client to the Redis Server specified by Options.
 func NewClient(opt *Options) *Client {
 	opt.init()
+
 	c := Client{
 		baseClient: &baseClient{
 			opt: opt,

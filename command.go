@@ -39,7 +39,7 @@ type Cmder interface {
 	SetFirstKeyPos(int8)
 
 	readTimeout() *time.Duration
-	readReply(rd *proto.Reader) error
+	readReply(rd internal.Reader) error
 
 	SetErr(error)
 	Err() error
@@ -477,7 +477,7 @@ func (cmd *Cmd) BoolSlice() ([]bool, error) {
 	return bools, nil
 }
 
-func (cmd *Cmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *Cmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadReply()
 	return err
 }
@@ -537,8 +537,7 @@ func (cmd *SliceCmd) Scan(dst interface{}) error {
 	return hscan.Scan(dst, args, cmd.val)
 }
 
-func (cmd *SliceCmd) readReply(rd *proto.Reader) (err error) {
-
+func (cmd *SliceCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadSlice()
 	return err
 }
@@ -578,9 +577,8 @@ func (cmd *StatusCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *StatusCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *StatusCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadString()
-
 	return err
 }
 
@@ -623,7 +621,7 @@ func (cmd *IntCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *IntCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *IntCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadInt()
 	return err
 }
@@ -663,7 +661,7 @@ func (cmd *IntSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *IntSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *IntSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -714,7 +712,7 @@ func (cmd *DurationCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *DurationCmd) readReply(rd *proto.Reader) error {
+func (cmd *DurationCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadInt()
 	if err != nil {
 		return err
@@ -765,7 +763,7 @@ func (cmd *TimeCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *TimeCmd) readReply(rd *proto.Reader) error {
+func (cmd *TimeCmd) readReply(rd internal.Reader) error {
 	if err := rd.ReadFixedArrayLen(2); err != nil {
 		return err
 	}
@@ -816,7 +814,7 @@ func (cmd *BoolCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *BoolCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *BoolCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadBool()
 
 	// `SET key value NX` returns nil when key already exists. But
@@ -927,7 +925,7 @@ func (cmd *StringCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *StringCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *StringCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadString()
 	return err
 }
@@ -967,7 +965,7 @@ func (cmd *FloatCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *FloatCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *FloatCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = rd.ReadFloat()
 	return err
 }
@@ -1007,7 +1005,7 @@ func (cmd *FloatSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *FloatSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *FloatSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1066,7 +1064,7 @@ func (cmd *StringSliceCmd) ScanSlice(container interface{}) error {
 	return proto.ScanSlice(cmd.Val(), container)
 }
 
-func (cmd *StringSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *StringSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1136,7 +1134,7 @@ func (cmd *KeyValueSliceCmd) String() string {
 //  2. (double) 2
 //  3. "one"
 //  4. (double) 1
-func (cmd *KeyValueSliceCmd) readReply(rd *proto.Reader) error { // nolint:dupl
+func (cmd *KeyValueSliceCmd) readReply(rd internal.Reader) error { // nolint:dupl
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1214,7 +1212,7 @@ func (cmd *BoolSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *BoolSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *BoolSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1284,7 +1282,7 @@ func (cmd *MapStringStringCmd) Scan(dest interface{}) error {
 	return nil
 }
 
-func (cmd *MapStringStringCmd) readReply(rd *proto.Reader) error {
+func (cmd *MapStringStringCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -1342,7 +1340,7 @@ func (cmd *MapStringIntCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *MapStringIntCmd) readReply(rd *proto.Reader) error {
+func (cmd *MapStringIntCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -1395,7 +1393,7 @@ func (cmd *MapStringSliceInterfaceCmd) Val() map[string][]interface{} {
 	return cmd.val
 }
 
-func (cmd *MapStringSliceInterfaceCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *MapStringSliceInterfaceCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -1458,7 +1456,7 @@ func (cmd *StringStructMapCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *StringStructMapCmd) readReply(rd *proto.Reader) error {
+func (cmd *StringStructMapCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1515,12 +1513,12 @@ func (cmd *XMessageSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XMessageSliceCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *XMessageSliceCmd) readReply(rd internal.Reader) (err error) {
 	cmd.val, err = readXMessageSlice(rd)
 	return err
 }
 
-func readXMessageSlice(rd *proto.Reader) ([]XMessage, error) {
+func readXMessageSlice(rd internal.Reader) ([]XMessage, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -1535,7 +1533,7 @@ func readXMessageSlice(rd *proto.Reader) ([]XMessage, error) {
 	return msgs, nil
 }
 
-func readXMessage(rd *proto.Reader) (XMessage, error) {
+func readXMessage(rd internal.Reader) (XMessage, error) {
 	if err := rd.ReadFixedArrayLen(2); err != nil {
 		return XMessage{}, err
 	}
@@ -1558,7 +1556,7 @@ func readXMessage(rd *proto.Reader) (XMessage, error) {
 	}, nil
 }
 
-func stringInterfaceMapParser(rd *proto.Reader) (map[string]interface{}, error) {
+func stringInterfaceMapParser(rd internal.Reader) (map[string]interface{}, error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return nil, err
@@ -1621,7 +1619,7 @@ func (cmd *XStreamSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XStreamSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *XStreamSliceCmd) readReply(rd internal.Reader) error {
 	typ, err := rd.PeekReplyType()
 	if err != nil {
 		return err
@@ -1694,7 +1692,7 @@ func (cmd *XPendingCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XPendingCmd) readReply(rd *proto.Reader) error {
+func (cmd *XPendingCmd) readReply(rd internal.Reader) error {
 	var err error
 	if err = rd.ReadFixedArrayLen(4); err != nil {
 		return err
@@ -1777,7 +1775,7 @@ func (cmd *XPendingExtCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XPendingExtCmd) readReply(rd *proto.Reader) error {
+func (cmd *XPendingExtCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1848,7 +1846,7 @@ func (cmd *XAutoClaimCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XAutoClaimCmd) readReply(rd *proto.Reader) error {
+func (cmd *XAutoClaimCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1918,7 +1916,7 @@ func (cmd *XAutoClaimJustIDCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XAutoClaimJustIDCmd) readReply(rd *proto.Reader) error {
+func (cmd *XAutoClaimJustIDCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -2000,7 +1998,7 @@ func (cmd *XInfoConsumersCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XInfoConsumersCmd) readReply(rd *proto.Reader) error {
+func (cmd *XInfoConsumersCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -2088,7 +2086,7 @@ func (cmd *XInfoGroupsCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XInfoGroupsCmd) readReply(rd *proto.Reader) error {
+func (cmd *XInfoGroupsCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -2200,7 +2198,7 @@ func (cmd *XInfoStreamCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XInfoStreamCmd) readReply(rd *proto.Reader) error {
+func (cmd *XInfoStreamCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -2347,7 +2345,7 @@ func (cmd *XInfoStreamFullCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *XInfoStreamFullCmd) readReply(rd *proto.Reader) error {
+func (cmd *XInfoStreamFullCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -2414,7 +2412,7 @@ func (cmd *XInfoStreamFullCmd) readReply(rd *proto.Reader) error {
 	return nil
 }
 
-func readStreamGroups(rd *proto.Reader) ([]XInfoStreamGroup, error) {
+func readStreamGroups(rd internal.Reader) ([]XInfoStreamGroup, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -2483,7 +2481,7 @@ func readStreamGroups(rd *proto.Reader) ([]XInfoStreamGroup, error) {
 	return groups, nil
 }
 
-func readXInfoStreamGroupPending(rd *proto.Reader) ([]XInfoStreamGroupPending, error) {
+func readXInfoStreamGroupPending(rd internal.Reader) ([]XInfoStreamGroupPending, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -2525,7 +2523,7 @@ func readXInfoStreamGroupPending(rd *proto.Reader) ([]XInfoStreamGroupPending, e
 	return pending, nil
 }
 
-func readXInfoStreamConsumers(rd *proto.Reader) ([]XInfoStreamConsumer, error) {
+func readXInfoStreamConsumers(rd internal.Reader) ([]XInfoStreamConsumer, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -2646,7 +2644,7 @@ func (cmd *ZSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ZSliceCmd) readReply(rd *proto.Reader) error { // nolint:dupl
+func (cmd *ZSliceCmd) readReply(rd internal.Reader) error { // nolint:dupl
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -2724,7 +2722,7 @@ func (cmd *ZWithKeyCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ZWithKeyCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *ZWithKeyCmd) readReply(rd internal.Reader) (err error) {
 	if err = rd.ReadFixedArrayLen(3); err != nil {
 		return err
 	}
@@ -2783,7 +2781,7 @@ func (cmd *ScanCmd) String() string {
 	return cmdString(cmd, cmd.page)
 }
 
-func (cmd *ScanCmd) readReply(rd *proto.Reader) error {
+func (cmd *ScanCmd) readReply(rd internal.Reader) error {
 	if err := rd.ReadFixedArrayLen(2); err != nil {
 		return err
 	}
@@ -2862,7 +2860,7 @@ func (cmd *ClusterSlotsCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ClusterSlotsCmd) readReply(rd *proto.Reader) error {
+func (cmd *ClusterSlotsCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3052,7 +3050,7 @@ func (cmd *GeoLocationCmd) String() string {
 	return cmdString(cmd, cmd.locations)
 }
 
-func (cmd *GeoLocationCmd) readReply(rd *proto.Reader) error {
+func (cmd *GeoLocationCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3232,7 +3230,7 @@ func (cmd *GeoSearchLocationCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *GeoSearchLocationCmd) readReply(rd *proto.Reader) error {
+func (cmd *GeoSearchLocationCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3322,7 +3320,7 @@ func (cmd *GeoPosCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *GeoPosCmd) readReply(rd *proto.Reader) error {
+func (cmd *GeoPosCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3403,7 +3401,7 @@ func (cmd *CommandsInfoCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *CommandsInfoCmd) readReply(rd *proto.Reader) error {
+func (cmd *CommandsInfoCmd) readReply(rd internal.Reader) error {
 	const numArgRedis5 = 6
 	const numArgRedis6 = 7
 	const numArgRedis7 = 10
@@ -3593,7 +3591,7 @@ func (cmd *SlowLogCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *SlowLogCmd) readReply(rd *proto.Reader) error {
+func (cmd *SlowLogCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3692,7 +3690,7 @@ func (cmd *MapStringInterfaceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *MapStringInterfaceCmd) readReply(rd *proto.Reader) error {
+func (cmd *MapStringInterfaceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -3756,7 +3754,7 @@ func (cmd *MapStringStringSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *MapStringStringSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *MapStringStringSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3820,7 +3818,7 @@ func (cmd *MapStringInterfaceSliceCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *MapStringInterfaceSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *MapStringInterfaceSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -3887,7 +3885,7 @@ func (cmd *KeyValuesCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *KeyValuesCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *KeyValuesCmd) readReply(rd internal.Reader) (err error) {
 	if err = rd.ReadFixedArrayLen(2); err != nil {
 		return err
 	}
@@ -3949,7 +3947,7 @@ func (cmd *ZSliceWithKeyCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ZSliceWithKeyCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *ZSliceWithKeyCmd) readReply(rd internal.Reader) (err error) {
 	if err = rd.ReadFixedArrayLen(2); err != nil {
 		return err
 	}
@@ -4051,7 +4049,7 @@ func (cmd *FunctionListCmd) First() (*Library, error) {
 	return nil, Nil
 }
 
-func (cmd *FunctionListCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *FunctionListCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -4095,7 +4093,7 @@ func (cmd *FunctionListCmd) readReply(rd *proto.Reader) (err error) {
 	return nil
 }
 
-func (cmd *FunctionListCmd) readFunctions(rd *proto.Reader) ([]Function, error) {
+func (cmd *FunctionListCmd) readFunctions(rd internal.Reader) ([]Function, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -4222,7 +4220,7 @@ func (cmd *FunctionStatsCmd) Result() (FunctionStats, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *FunctionStatsCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *FunctionStatsCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -4256,7 +4254,7 @@ func (cmd *FunctionStatsCmd) readReply(rd *proto.Reader) (err error) {
 	return nil
 }
 
-func (cmd *FunctionStatsCmd) readRunningScript(rd *proto.Reader) (RunningScript, bool, error) {
+func (cmd *FunctionStatsCmd) readRunningScript(rd internal.Reader) (RunningScript, bool, error) {
 	err := rd.ReadFixedMapLen(3)
 	if err != nil {
 		if err == Nil {
@@ -4291,7 +4289,7 @@ func (cmd *FunctionStatsCmd) readRunningScript(rd *proto.Reader) (RunningScript,
 	return runningScript, true, nil
 }
 
-func (cmd *FunctionStatsCmd) readEngines(rd *proto.Reader) ([]Engine, error) {
+func (cmd *FunctionStatsCmd) readEngines(rd internal.Reader) ([]Engine, error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return nil, err
@@ -4328,7 +4326,7 @@ func (cmd *FunctionStatsCmd) readEngines(rd *proto.Reader) ([]Engine, error) {
 	return engines, nil
 }
 
-func (cmd *FunctionStatsCmd) readDuration(rd *proto.Reader) (time.Duration, error) {
+func (cmd *FunctionStatsCmd) readDuration(rd internal.Reader) (time.Duration, error) {
 	t, err := rd.ReadInt()
 	if err != nil {
 		return time.Duration(0), err
@@ -4336,7 +4334,7 @@ func (cmd *FunctionStatsCmd) readDuration(rd *proto.Reader) (time.Duration, erro
 	return time.Duration(t) * time.Millisecond, nil
 }
 
-func (cmd *FunctionStatsCmd) readCommand(rd *proto.Reader) ([]string, error) {
+func (cmd *FunctionStatsCmd) readCommand(rd internal.Reader) ([]string, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -4354,7 +4352,7 @@ func (cmd *FunctionStatsCmd) readCommand(rd *proto.Reader) ([]string, error) {
 	return command, nil
 }
 
-func (cmd *FunctionStatsCmd) readRunningScripts(rd *proto.Reader) ([]RunningScript, bool, error) {
+func (cmd *FunctionStatsCmd) readRunningScripts(rd internal.Reader) ([]RunningScript, bool, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, false, err
@@ -4458,7 +4456,7 @@ func (cmd *LCSCmd) Result() (*LCSMatch, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *LCSCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *LCSCmd) readReply(rd internal.Reader) (err error) {
 	lcs := &LCSMatch{}
 	switch cmd.readType {
 	case 1:
@@ -4503,7 +4501,7 @@ func (cmd *LCSCmd) readReply(rd *proto.Reader) (err error) {
 	return nil
 }
 
-func (cmd *LCSCmd) readMatchedPositions(rd *proto.Reader) ([]LCSMatchedPosition, error) {
+func (cmd *LCSCmd) readMatchedPositions(rd internal.Reader) ([]LCSMatchedPosition, error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return nil, err
@@ -4534,7 +4532,7 @@ func (cmd *LCSCmd) readMatchedPositions(rd *proto.Reader) ([]LCSMatchedPosition,
 	return positions, nil
 }
 
-func (cmd *LCSCmd) readPosition(rd *proto.Reader) (pos LCSPosition, err error) {
+func (cmd *LCSCmd) readPosition(rd internal.Reader) (pos LCSPosition, err error) {
 	if err = rd.ReadFixedArrayLen(2); err != nil {
 		return pos, err
 	}
@@ -4588,7 +4586,7 @@ func (cmd *KeyFlagsCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *KeyFlagsCmd) readReply(rd *proto.Reader) error {
+func (cmd *KeyFlagsCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -4670,7 +4668,7 @@ func (cmd *ClusterLinksCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ClusterLinksCmd) readReply(rd *proto.Reader) error {
+func (cmd *ClusterLinksCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -4772,7 +4770,7 @@ func (cmd *ClusterShardsCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ClusterShardsCmd) readReply(rd *proto.Reader) error {
+func (cmd *ClusterShardsCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -4905,7 +4903,7 @@ func (cmd *RankWithScoreCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *RankWithScoreCmd) readReply(rd *proto.Reader) error {
+func (cmd *RankWithScoreCmd) readReply(rd internal.Reader) error {
 	if err := rd.ReadFixedArrayLen(2); err != nil {
 		return err
 	}
@@ -5051,7 +5049,7 @@ func (cmd *ClientInfoCmd) Result() (*ClientInfo, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *ClientInfoCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *ClientInfoCmd) readReply(rd internal.Reader) (err error) {
 	txt, err := rd.ReadString()
 	if err != nil {
 		return err
@@ -5245,7 +5243,7 @@ func (cmd *ACLLogCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *ACLLogCmd) readReply(rd *proto.Reader) error {
+func (cmd *ACLLogCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -5356,7 +5354,7 @@ func (cmd *InfoCmd) String() string {
 	return cmdString(cmd, cmd.val)
 }
 
-func (cmd *InfoCmd) readReply(rd *proto.Reader) error {
+func (cmd *InfoCmd) readReply(rd internal.Reader) error {
 	val, err := rd.ReadString()
 	if err != nil {
 		return err
@@ -5433,7 +5431,7 @@ func (cmd *MonitorCmd) String() string {
 	return cmdString(cmd, nil)
 }
 
-func (cmd *MonitorCmd) readReply(rd *proto.Reader) error {
+func (cmd *MonitorCmd) readReply(rd internal.Reader) error {
 	ctx, cancel := context.WithCancel(cmd.ctx)
 	go func(ctx context.Context) {
 		for {
@@ -5452,7 +5450,7 @@ func (cmd *MonitorCmd) readReply(rd *proto.Reader) error {
 	return nil
 }
 
-func (cmd *MonitorCmd) readMonitor(rd *proto.Reader, cancel context.CancelFunc) error {
+func (cmd *MonitorCmd) readMonitor(rd internal.Reader, cancel context.CancelFunc) error {
 	for {
 		cmd.mu.Lock()
 		st := cmd.status

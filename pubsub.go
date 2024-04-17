@@ -432,7 +432,7 @@ func (c *PubSub) ReceiveTimeout(ctx context.Context, timeout time.Duration) (int
 		return nil, err
 	}
 
-	err = cn.WithReader(context.Background(), timeout, func(rd *proto.Reader) error {
+	err = cn.WithReader(context.Background(), timeout, func(rd internal.Reader) error {
 		return c.cmd.readReply(rd)
 	})
 

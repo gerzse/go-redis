@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/redis/go-redis/v9/internal/proto"
+	"github.com/redis/go-redis/v9/internal"
 )
 
 type TimeseriesCmdable interface {
@@ -480,7 +480,7 @@ func (cmd *TSTimestampValueCmd) Val() TSTimestampValue {
 	return cmd.val
 }
 
-func (cmd *TSTimestampValueCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *TSTimestampValueCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadMapLen()
 	if err != nil {
 		return err
@@ -698,7 +698,7 @@ func (cmd *TSTimestampValueSliceCmd) Val() []TSTimestampValue {
 	return cmd.val
 }
 
-func (cmd *TSTimestampValueSliceCmd) readReply(rd *proto.Reader) (err error) {
+func (cmd *TSTimestampValueSliceCmd) readReply(rd internal.Reader) (err error) {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err

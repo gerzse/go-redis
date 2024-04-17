@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/redis/go-redis/v9/internal/cache"
 	"github.com/redis/go-redis/v9/internal/pool"
 )
 
@@ -149,7 +150,7 @@ type Options struct {
 	IdentitySuffix string
 
 	// Enable cache for the client.
-	CacheObject *Cache
+	CacheObject *cache.Cache
 }
 
 func (opt *Options) init() {

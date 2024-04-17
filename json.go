@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/redis/go-redis/v9/internal"
 	"github.com/redis/go-redis/v9/internal/proto"
 	"github.com/redis/go-redis/v9/internal/util"
 )
@@ -111,7 +112,7 @@ func (cmd JSONCmd) Expanded() (interface{}, error) {
 	return cmd.expanded, nil
 }
 
-func (cmd *JSONCmd) readReply(rd *proto.Reader) error {
+func (cmd *JSONCmd) readReply(rd internal.Reader) error {
 	// nil response from JSON.(M)GET (cmd.baseCmd.err will be "redis: nil")
 	if cmd.baseCmd.Err() == Nil {
 		cmd.val = ""
@@ -181,7 +182,7 @@ func (cmd *JSONSliceCmd) Result() ([]interface{}, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *JSONSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *JSONSliceCmd) readReply(rd internal.Reader) error {
 	if cmd.baseCmd.Err() == Nil {
 		cmd.val = nil
 		return Nil
@@ -255,7 +256,7 @@ func (cmd *IntPointerSliceCmd) Result() ([]*int64, error) {
 	return cmd.val, cmd.err
 }
 
-func (cmd *IntPointerSliceCmd) readReply(rd *proto.Reader) error {
+func (cmd *IntPointerSliceCmd) readReply(rd internal.Reader) error {
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
